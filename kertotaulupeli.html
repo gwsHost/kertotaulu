@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kertotaulupeli</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: #fff;
+    }
+
+    h1 {
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      margin-bottom: 16px;
+      text-align: center;
+      color: #e0d7ff;
+      text-shadow: 0 0 20px rgba(150, 100, 255, 0.5);
+    }
+
+    #pisteet-palkki {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 20px;
+      font-size: clamp(0.85rem, 3vw, 1rem);
+      background: rgba(255,255,255,0.08);
+      padding: 8px 22px;
+      border-radius: 50px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    #pisteet-palkki span { color: #a78bfa; font-weight: bold; }
+
+    #bonus-merkki {
+      display: none;
+      background: linear-gradient(90deg, #f59e0b, #ef4444);
+      color: #fff;
+      font-weight: bold;
+      font-size: clamp(0.75rem, 2.5vw, 0.9rem);
+      padding: 4px 14px;
+      border-radius: 50px;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: 0 0 16px rgba(245,158,11,0.5);
+    }
+
+    #peli-alue {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 24px;
+      padding: clamp(16px, 4vw, 36px);
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    #lasku {
+      font-size: clamp(2.2rem, 11vw, 4.5rem);
+      font-weight: bold;
+      letter-spacing: 4px;
+      color: #fff;
+      text-align: center;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-shadow: 0 0 30px rgba(167, 139, 250, 0.6);
+    }
+
+    #vastaus-nakoma {
+      font-size: clamp(1.4rem, 6vw, 2.2rem);
+      min-height: 48px;
+      color: #60a5fa;
+      letter-spacing: 6px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    #palaute {
+      font-size: clamp(1rem, 3.5vw, 1.3rem);
+      min-height: 36px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .oikein { color: #4ade80; }
+    .vaarin  { color: #f87171; }
+
+    /* Laskin-asettelu: 3 x 3 + nolla */
+    #numero-napit {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      width: 100%;
+    }
+
+    .num-nappi {
+      background: linear-gradient(145deg, #7c3aed, #4f46e5);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: clamp(1.4rem, 6vw, 2rem);
+      font-weight: bold;
+      padding: 18px 8px;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform 0.1s, background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+      user-select: none;
+    }
+
+    .num-nappi:hover {
+      background: linear-gradient(145deg, #8b5cf6, #6366f1);
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+    }
+
+    .num-nappi:active { transform: scale(0.92); }
+
+    /* Nolla vie koko alarivi (3 sarakkeen leveys) */
+    .num-nappi.nolla {
+      grid-column: 1 / -1;
+      padding: 14px 8px;
+    }
+
+    #ala-napit {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    #tyhjenna-nappi {
+      background: linear-gradient(145deg, #be123c, #9f1239);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: clamp(1rem, 4vw, 1.2rem);
+      font-weight: bold;
+      padding: 14px 16px;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(190, 18, 60, 0.4);
+      flex: 1;
+      user-select: none;
+    }
+
+    #tyhjenna-nappi:active { transform: scale(0.95); }
+
+    #ok-nappi {
+      background: linear-gradient(145deg, #15803d, #166534);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: clamp(1rem, 4vw, 1.2rem);
+      font-weight: bold;
+      padding: 14px 16px;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform 0.1s, box-shadow 0.2s, background 0.2s;
+      box-shadow: 0 4px 15px rgba(21, 128, 61, 0.5);
+      flex: 2;
+      user-select: none;
+    }
+
+    #ok-nappi:hover { background: linear-gradient(145deg, #16a34a, #15803d); box-shadow: 0 6px 20px rgba(22,163,74,0.6); }
+    #ok-nappi:active { transform: scale(0.95); }
+    #ok-nappi:disabled { opacity: 0.35; cursor: default; box-shadow: none; transform: none; }
+
+    #uusi-nappi {
+      background: linear-gradient(145deg, #047857, #065f46);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      font-size: clamp(1rem, 4vw, 1.2rem);
+      padding: 14px 40px;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 4px 15px rgba(4, 120, 87, 0.4);
+      display: none;
+      user-select: none;
+    }
+
+    #uusi-nappi:hover { background: linear-gradient(145deg, #059669, #047857); }
+    #uusi-nappi:active { transform: scale(0.96); }
+
+    #edistymis-palkki {
+      width: 100%;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    #edistymis-tayta {
+      height: 100%;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      border-radius: 10px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    #edistymis-palkki.bonus-bar #edistymis-tayta {
+      background: linear-gradient(90deg, #f59e0b, #ef4444);
+    }
+
+    #kierros-teksti {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.5);
+    }
+
+    @media (max-width: 360px) {
+      .num-nappi { padding: 14px 4px; border-radius: 10px; }
+      #numero-napit { gap: 7px; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>&#128290; Kertotaulupeli</h1>
+
+<div id="pisteet-palkki">
+  <div>Pisteet: <span id="pisteet">0</span></div>
+  <div>Per&#228;kk&#228;in: <span id="putki">0</span></div>
+  <div>Taso: <span id="taso">1</span></div>
+</div>
+
+<div id="bonus-merkki">&#11088; BONUS-KIERROS!</div>
+
+<div id="peli-alue">
+  <div id="lasku">&#8211; &times; &#8211; = ?</div>
+  <div id="vastaus-nakoma">_</div>
+  <div id="palaute">&nbsp;</div>
+
+  <div id="edistymis-palkki">
+    <div id="edistymis-tayta"></div>
+  </div>
+  <div id="kierros-teksti">Kysymys <span id="q-num">1</span> / <span id="q-max">20</span></div>
+
+  <!-- Laskin-asettelu: 7 8 9 / 4 5 6 / 1 2 3 / 0 -->
+  <div id="numero-napit">
+    <button class="num-nappi" data-n="7">7</button>
+    <button class="num-nappi" data-n="8">8</button>
+    <button class="num-nappi" data-n="9">9</button>
+    <button class="num-nappi" data-n="4">4</button>
+    <button class="num-nappi" data-n="5">5</button>
+    <button class="num-nappi" data-n="6">6</button>
+    <button class="num-nappi" data-n="1">1</button>
+    <button class="num-nappi" data-n="2">2</button>
+    <button class="num-nappi" data-n="3">3</button>
+    <button class="num-nappi nolla" data-n="0">0</button>
+  </div>
+
+  <div id="ala-napit">
+    <button id="tyhjenna-nappi">&#9003; Tyhjenн&#228;</button>
+    <button id="ok-nappi" disabled>&#10003; OK</button>
+  </div>
+
+  <button id="uusi-nappi">&#9654; Uusi peli</button>
+</div>
+
+<script>
+  const PERUSKYSYMYKSIA = 20;
+  const BONUSKYSYMYKSIA = 10;
+  const MAX_NUMEROT = 3;
+
+  let oikeaVastaus = 0;
+  let syotetty = '';
+  let pisteet = 0;
+  let putki = 0;
+  let kierros = 0;
+  let peliKaynnissa = true;
+  let taso = 1;
+  let bonusVaihe = false;
+  let perusPool = [];   // sekoitettu kierrätyspakka 1-10
+
+  const lasku      = document.getElementById('lasku');
+  const nakoma     = document.getElementById('vastaus-nakoma');
+  const palaute    = document.getElementById('palaute');
+  const pisteetEl  = document.getElementById('pisteet');
+  const putkiEl    = document.getElementById('putki');
+  const tasoEl     = document.getElementById('taso');
+  const qNum       = document.getElementById('q-num');
+  const qMax       = document.getElementById('q-max');
+  const edistymis  = document.getElementById('edistymis-tayta');
+  const edPalkki   = document.getElementById('edistymis-palkki');
+  const uusiNappi  = document.getElementById('uusi-nappi');
+  const okNappi    = document.getElementById('ok-nappi');
+  const bonusMerkki = document.getElementById('bonus-merkki');
+
+  // Fisher-Yates sekoitus
+  function sekoita(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // Palauttaa seuraavan numeron poolista (kaikki 1-10 ennen toistoa)
+  function seuraavaPoolista() {
+    if (perusPool.length === 0) {
+      perusPool = sekoita([1,2,3,4,5,6,7,8,9,10]);
+    }
+    return perusPool.pop();
+  }
+
+  function satunnainen(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function paivitaOkNappi() {
+    okNappi.disabled = syotetty.length === 0;
+  }
+
+  function uusiKysymys() {
+    syotetty = '';
+    nakoma.textContent = '_';
+    palaute.textContent = ' ';
+    palaute.className = '';
+    paivitaOkNappi();
+
+    kierros++;
+    qNum.textContent = kierros;
+
+    if (!bonusVaihe) {
+      // Peruspeli: molemmat luvut katettu poolista + 1-10
+      const a = seuraavaPoolista();
+      const b = satunnainen(1, 10);
+      oikeaVastaus = a * b;
+      lasku.textContent = a + ' × ' + b + ' = ?';
+      edistymis.style.width = ((kierros - 1) / PERUSKYSYMYKSIA * 100) + '%';
+    } else {
+      // Bonusvaihe: toinen luku 10-20
+      const bKierros = kierros - PERUSKYSYMYKSIA;
+      const a = seuraavaPoolista();
+      const b = satunnainen(10, 20);
+      // Satunnaisesti kumpi on iso luku
+      const [x, y] = Math.random() < 0.5 ? [a, b] : [b, a];
+      oikeaVastaus = x * y;
+      lasku.textContent = x + ' × ' + y + ' = ?';
+      edistymis.style.width = ((bKierros - 1) / BONUSKYSYMYKSIA * 100) + '%';
+    }
+  }
+
+  function siirroBonukseen() {
+    bonusVaihe = true;
+    kierros = 0;
+    qMax.textContent = BONUSKYSYMYKSIA;
+    bonusMerkki.style.display = 'block';
+    edPalkki.classList.add('bonus-bar');
+    palaute.textContent = 'Perus valmis! Nyt bonuskierros!';
+    palaute.className = 'oikein';
+    setTimeout(function() { uusiKysymys(); }, 1600);
+  }
+
+  function tarkistaVastaus() {
+    const annettu = parseInt(syotetty, 10);
+    if (isNaN(annettu) || syotetty.length === 0) return;
+
+    okNappi.disabled = true;
+
+    if (annettu === oikeaVastaus) {
+      const bonus = Math.max(1, putki);
+      pisteet += bonus;
+      putki++;
+      pisteetEl.textContent = pisteet;
+      putkiEl.textContent = putki;
+      palaute.textContent = putki > 1
+        ? 'Oikein! (+' + bonus + ' p, putki ' + putki + '!)'
+        : 'Oikein!';
+      palaute.className = 'oikein';
+    } else {
+      putki = 0;
+      putkiEl.textContent = 0;
+      palaute.textContent = 'Väärin — oikea vastaus oli ' + oikeaVastaus;
+      palaute.className = 'vaarin';
+    }
+
+    const maxTalla = bonusVaihe ? BONUSKYSYMYKSIA : PERUSKYSYMYKSIA;
+
+    if (kierros >= maxTalla) {
+      if (!bonusVaihe) {
+        setTimeout(siirroBonukseen, 1400);
+      } else {
+        setTimeout(lopeta, 1400);
+      }
+    } else {
+      setTimeout(function() { if (peliKaynnissa) uusiKysymys(); }, 1400);
+    }
+  }
+
+  function lopeta() {
+    peliKaynnissa = false;
+    taso = Math.min(10, Math.floor(pisteet / 12) + 1);
+    tasoEl.textContent = taso;
+    edistymis.style.width = '100%';
+    lasku.textContent = 'Peli ohi!';
+    nakoma.textContent = '';
+    palaute.textContent = 'Pisteet: ' + pisteet + ' — Uusi peli?';
+    palaute.className = 'oikein';
+    uusiNappi.style.display = 'block';
+  }
+
+  function aloitaUusi() {
+    pisteet = 0;
+    putki = 0;
+    kierros = 0;
+    peliKaynnissa = true;
+    bonusVaihe = false;
+    perusPool = [];
+    pisteetEl.textContent = 0;
+    putkiEl.textContent = 0;
+    tasoEl.textContent = taso;
+    qMax.textContent = PERUSKYSYMYKSIA;
+    uusiNappi.style.display = 'none';
+    bonusMerkki.style.display = 'none';
+    edPalkki.classList.remove('bonus-bar');
+    uusiKysymys();
+  }
+
+  function syotaNumero(n) {
+    if (!peliKaynnissa) return;
+    if (syotetty.length >= MAX_NUMEROT) return;
+    syotetty += n;
+    nakoma.textContent = syotetty;
+    paivitaOkNappi();
+  }
+
+  function tyhjennaViimeinen() {
+    if (!peliKaynnissa) return;
+    syotetty = syotetty.slice(0, -1);
+    nakoma.textContent = syotetty || '_';
+    paivitaOkNappi();
+  }
+
+  document.querySelectorAll('.num-nappi').forEach(function(btn) {
+    btn.addEventListener('click', function() { syotaNumero(btn.dataset.n); });
+  });
+
+  document.getElementById('tyhjenna-nappi').addEventListener('click', tyhjennaViimeinen);
+
+  okNappi.addEventListener('click', function() {
+    if (!okNappi.disabled) tarkistaVastaus();
+  });
+
+  uusiNappi.addEventListener('click', aloitaUusi);
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key >= '0' && e.key <= '9') syotaNumero(e.key);
+    if (e.key === 'Backspace') tyhjennaViimeinen();
+    if (e.key === 'Enter') {
+      if (peliKaynnissa && !okNappi.disabled) tarkistaVastaus();
+      else if (!peliKaynnissa) aloitaUusi();
+    }
+  });
+
+  uusiKysymys();
+</script>
+</body>
+</html>
